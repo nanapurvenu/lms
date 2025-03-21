@@ -1,31 +1,72 @@
 pipeline {
     agent any
     environment {
-        // More detail: 
-        // https://jenkins.io/doc/book/pipeline/jenkinsfile/#usernames-and-passwords
-        NEXUS_CRED = credentials('nexus')
-   }
-
+        REGISTRY_CREDENTIALS = "dockerhub"
+        NETWORK_NAME = "lms-network"
+    }
     stages {
-        stage('Build') {
+        stage('Extract Version') {
             steps {
-                echo 'Building..'
-                sh 'cd webapp && npm install && npm run build'
+                script {
+                    def packageJson = readJSON file: 'webapp/package.json'
+                    env.APP_VERSION = packageJson.version
+                    echo "App Version: ${APP_VERSION}"
+                }
             }
         }
-        stage('Test') {
+        stage('Build and Push Docker Images') {
             steps {
-                echo 'Testing..'
-                sh 'cd webapp && sudo docker container run --rm -e SONAR_HOST_URL="http://20.172.187.108:9000" -e SONAR_LOGIN="sqp_cae41e62e13793ff17d58483fb6fb82602fe2b48" -v ".:/usr/src" sonarsource/sonar-scanner-cli -Dsonar.projectKey=lms'
+                script {
+                    withCredentials([usernamePassword(credentialsId: REGISTRY_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker build -t venureddy3417/lms-fe:${APP_VERSION} webapp/
+                        docker build -t venureddy3417/lms-be:${APP_VERSION} api/
+                        docker push venureddy3417/lms-fe:${APP_VERSION}
+                        docker push venureddy3417/lms-be:${APP_VERSION}
+                        """
+                    }
+                }
             }
         }
-        stage('Release') {
+        stage('Deploy on Docker Server') {
             steps {
-                echo 'Release Nexus'
-                sh 'rm -rf *.zip'
-                sh 'cd webapp && zip dist-${BUILD_NUMBER}.zip -r dist'
-                sh 'cd webapp && curl -v -u $Username:$Password --upload-file dist-${BUILD_NUMBER}.zip http://20.172.187.108:8081/repository/lms/'
+                script {
+                    sh """
+                    # Stop and remove old containers in the network
+                    docker ps --filter "network=${NETWORK_NAME}" -q | xargs -r docker rm -f
+                    docker network rm ${NETWORK_NAME} || true
+                    docker network create ${NETWORK_NAME} || true
+                    # Start Database Container
+                    docker container rm -f lms-db || true
+                    docker run -dt --name lms-db -p 5432:5432 \
+                        -e POSTGRES_USER=postgres \
+                        -e POSTGRES_PASSWORD=app12345 \
+                        -e POSTGRES_DB=postgres \
+                        --network ${NETWORK_NAME} postgres
+                    # Start Backend Container
+                    docker pull venureddy3417/lms-be:${APP_VERSION}
+                    docker container rm -f lms-be || true
+                    docker container run -dt --name lms-be -p 8081:8080 \
+                        -e DATABASE_URL="postgresql://postgres:app12345@lms-db:5432/lmsdb?schema=public" \
+                        --network ${NETWORK_NAME} venureddy3417/lms-be:${APP_VERSION}
+                    # Start Frontend Container
+                    docker pull venureddy3417/lms-fe:${APP_VERSION}
+                    docker container rm -f lms-fe || true
+                    docker container run -dt --name lms-fe -p 80:80 \
+                        --network ${NETWORK_NAME} venureddy3417/lms-fe:${APP_VERSION}
+                    """
+                }
             }
         }
     }
 }
+
+
+
+
+
+
+
+
+
