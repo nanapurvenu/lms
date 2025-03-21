@@ -44,8 +44,8 @@ pipeline {
                     docker pull pulipatitejashwini/lms-be:${APP_VERSION}
                     docker container rm -f lms-be || true
                     docker run -dt --name lms-be --network lms-net -p 8081:8080 \
-                    -e DATABASE_URL="postgresql://postgres:app12345@lms-db:5432/lmsdb?schema=public" \
-                    pulipatitejashwini/lms-be:${APP_VERSION}
+                      -e DATABASE_URL="postgresql://postgres:app12345@lms-db:5432/lmsdb?schema=public" \
+                      venureddy3417/lms-be:${APP_VERSION}
                     # Start Frontend Container
                     docker pull venureddy3417/lms-fe:${APP_VERSION}
                     docker container rm -f lms-fe || true
