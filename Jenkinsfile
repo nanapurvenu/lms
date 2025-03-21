@@ -36,16 +36,16 @@ pipeline {
                     # Stop and remove old containers in the network
                     docker ps --filter "network=${NETWORK_NAME}" -q | xargs -r docker rm -f
                     docker network rm ${NETWORK_NAME} || true
-                    docker network create ${NETWORK_NAME} || true
-                    # Start Database Container
+                    docker network create lms-net || true
+                    # Start DB container
                     docker container rm -f lms-db || true
-                    docker container run -dt --name lms-db -e POSTGRES_PASSWORD=app12345 postgres
-                    # Start Backend Container
-                    docker pull venureddy3417/lms-be:${APP_VERSION}
+                    docker run -dt --name lms-db --network lms-net -e POSTGRES_PASSWORD=app12345 -e POSTGRES_DB=lmsdb postgres
+                    # Start backend container
+                    docker pull pulipatitejashwini/lms-be:${APP_VERSION}
                     docker container rm -f lms-be || true
-                    docker container run -dt --name lms-be -p 8081:8080 \
-                        -e DATABASE_URL="postgresql://postgres:app12345@lms-db:5432/postgres?schema=public" \
-                        --network ${NETWORK_NAME} venureddy3417/lms-be:${APP_VERSION}
+                    docker run -dt --name lms-be --network lms-net -p 8081:8080 \
+                    -e DATABASE_URL="postgresql://postgres:app12345@lms-db:5432/lmsdb?schema=public" \
+                    pulipatitejashwini/lms-be:${APP_VERSION}
                     # Start Frontend Container
                     docker pull venureddy3417/lms-fe:${APP_VERSION}
                     docker container rm -f lms-fe || true
