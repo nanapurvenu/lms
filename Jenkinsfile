@@ -39,16 +39,12 @@ pipeline {
                     docker network create ${NETWORK_NAME} || true
                     # Start Database Container
                     docker container rm -f lms-db || true
-                    docker run -dt --name lms-db -p 5432:5432 \
-                        -e POSTGRES_USER=postgres \
-                        -e POSTGRES_PASSWORD=app12345 \
-                        -e POSTGRES_DB=postgres \
-                        --network ${NETWORK_NAME} postgres
+                    docker container run -dt --name lms-db -e POSTGRES_PASSWORD=app12345 postgres
                     # Start Backend Container
                     docker pull venureddy3417/lms-be:${APP_VERSION}
                     docker container rm -f lms-be || true
-                    docker container run -dt --name lms-be -p 8081:8080 \
-                        -e DATABASE_URL="postgresql://postgres:app12345@lms-db:5432/lmsdb?schema=public" \
+                    docker run -dt --name lms-be -p 8081:8080 \
+                        -e DATABASE_URL="postgresql://postgres:app12345@lms-db:5432/postgres?schema=public" \
                         --network ${NETWORK_NAME} venureddy3417/lms-be:${APP_VERSION}
                     # Start Frontend Container
                     docker pull venureddy3417/lms-fe:${APP_VERSION}
