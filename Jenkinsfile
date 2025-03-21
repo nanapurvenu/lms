@@ -33,24 +33,31 @@ pipeline {
             steps {
                 script {
                     sh """
-                    # Stop and remove old containers in the network
+                    echo "🧹 Cleaning up old containers and network"
                     docker ps --filter "network=${NETWORK_NAME}" -q | xargs -r docker rm -f
                     docker network rm ${NETWORK_NAME} || true
-                    docker network create ${NETWORK_NAME}|| true
-                    # Start DB container
+                    docker network create ${NETWORK_NAME} || true
+
+                    echo "🚀 Starting DB container"
                     docker container rm -f lms-db || true
-                    docker run -dt --name lms-db --network lms-net -e POSTGRES_PASSWORD=app12345 -e POSTGRES_DB=lmsdb postgres
-                    # Start backend container
+                    docker run -dt --name lms-db --network ${NETWORK_NAME} \
+                    -e POSTGRES_PASSWORD=app12345 -e POSTGRES_DB=lmsdb postgres
+
+                    echo "⏳ Waiting for DB to initialize..."
+                    sleep 10
+
+                    echo "🚀 Starting Backend container"
                     docker pull venureddy3417/lms-be:${APP_VERSION}
                     docker container rm -f lms-be || true
-                    docker run -dt --name lms-be --network lms-net -p 8081:8080 \
-                      -e DATABASE_URL="postgresql://postgres:app12345@lms-db:5432/lmsdb?schema=public" \
-                      venureddy3417/lms-be:${APP_VERSION}
-                    # Start Frontend Container
+                    docker run -dt --name lms-be --network ${NETWORK_NAME} -p 8081:8080 \
+                    -e DATABASE_URL="postgresql://postgres:app12345@lms-db:5432/lmsdb?schema=public" \
+                    venureddy3417/lms-be:${APP_VERSION}
+
+                    echo "🚀 Starting Frontend container"
                     docker pull venureddy3417/lms-fe:${APP_VERSION}
                     docker container rm -f lms-fe || true
-                    docker container run -dt --name lms-fe -p 80:80 \
-                        --network ${NETWORK_NAME} venureddy3417/lms-fe:${APP_VERSION}
+                    docker run -dt --name lms-fe --network ${NETWORK_NAME} -p 80:80 \
+                    venureddy3417/lms-fe:${APP_VERSION}
                     """
                 }
             }
