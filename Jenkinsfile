@@ -41,7 +41,7 @@ pipeline {
                     docker container rm -f lms-db || true
                     docker run -dt --name lms-db --network lms-net -e POSTGRES_PASSWORD=app12345 -e POSTGRES_DB=lmsdb postgres
                     # Start backend container
-                    docker pull pulipatitejashwini/lms-be:${APP_VERSION}
+                    docker pull venureddy3417/lms-be:${APP_VERSION}
                     docker container rm -f lms-be || true
                     docker run -dt --name lms-be --network lms-net -p 8081:8080 \
                       -e DATABASE_URL="postgresql://postgres:app12345@lms-db:5432/lmsdb?schema=public" \
