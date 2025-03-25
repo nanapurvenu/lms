@@ -1,19 +1,106 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: lms
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: db
+  template:
+    metadata:
+      labels:
+        tier: db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres
+        ports:
+        - containerPort: 5432
+        env:
+        - name: postgres-password
+          value: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-cluster-ip-service
+spec:
+  type: ClusterIP # Optional
+  selector:
+    component: postgres
+  ports:
+    - port: 5432
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lms-be
+data:
+  DB_HOST: postgres-cluster-ip-service
+  DB_PORT: "5432"
+  DB_USER: postgres
+  DB_NAME: postgres
+  PORT: "3000"
+  MODE: production
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lms-be
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lms-be
+  template:
+    metadata:
+      labels:
+        app: lms-be
+    spec:
+      containers:
+        - name: lms-be
+          image: venureddy3417/lms-be
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: lms-be
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lms-be-service
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 3000
+  selector:
+    app: lms-be
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lms-fe
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: lms
+      app: lms-fe
   template:
     metadata:
       labels:
-        app: lms
+        app: lms-fe
     spec:
       containers:
-      - name: lms
+      - name: lms-fe
         image: venureddy3417/lms-fe:IMAGE_VERSION
         ports:
         - containerPort: 80
@@ -21,10 +108,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: lms
+  name: lms-fe
 spec:
   type: LoadBalancer
   ports:
   - port: 80
   selector:
-    app: lms
+    app: lms-fe
+---    
