@@ -41,7 +41,7 @@ pipeline {
                     echo "🚀 Starting DB container"
                     docker container rm -f lms-db || true
                     docker run -dt --name lms-db --network ${NETWORK_NAME} \
-                    -e POSTGRES_PASSWORD=app12345 -e POSTGRES_DB=lmsdb postgres
+                    -e POSTGRES_PASSWORD=app12345 -e POSTGRES_DB=lms-db postgres
 
                     echo "⏳ Waiting for DB to initialize..."
                     sleep 10
@@ -50,7 +50,7 @@ pipeline {
                     docker pull venureddy3417/lms-be:${APP_VERSION}
                     docker container rm -f lms-be || true
                     docker run -dt --name lms-be --network ${NETWORK_NAME} -p 8081:8080 \
-                    -e DATABASE_URL="postgresql://postgres:app12345@lmsdb:5432/lmsdb?schema=public" \
+                    -e DATABASE_URL="postgresql://postgres:app12345@lms-db:5432/lmsdb?schema=public" \
                     venureddy3417/lms-be:${APP_VERSION}
 
                     echo "🚀 Starting Frontend container"
