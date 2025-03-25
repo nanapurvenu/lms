@@ -26,12 +26,12 @@ pipeline {
                             echo Logging into Docker Hub as \$DOCKER_USER
                             echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
 
-                            docker build -t \$DOCKER_USER/lms-fe:\${APP_VERSION} webapp/
-                            docker build -t \$DOCKER_USER/lms-be:\${APP_VERSION} api/
+                            docker build -t venureddy3417/lms-fe:\${APP_VERSION} webapp/
+                            docker build -t venureddy3417/lms-be:\${APP_VERSION} api/
 
                             docker images
-                            docker push \$DOCKER_USER/lms-fe:\${APP_VERSION}
-                            docker push \$DOCKER_USER/lms-be:\${APP_VERSION}
+                            docker push venureddy3417/lms-fe:\${APP_VERSION}
+                            docker push venureddy3417/lms-be:\${APP_VERSION}
                         """
                     }
                 }
