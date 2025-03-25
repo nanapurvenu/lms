@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         REGISTRY_CREDENTIALS = "dockerhub"
-        AWS_CREDENTIALS = 'aws-credentials'
+        AWS_CREDENTIALS = 'awscredentials'
         AWS_REGION = "us-west-2"
         KUBECONFIG_CREDENTIALS = 'kubeconfig'
     }
