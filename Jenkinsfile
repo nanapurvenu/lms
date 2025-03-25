@@ -43,7 +43,7 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_CREDENTIALS')]) {
                     sh '''
-                        export KUBECONFIG=$KUBECONFIG_CRED
+                        export KUBECONFIG=$KUBECONFIG_CREDENTIALS
                         echo "Using Kubeconfig: \$KUBECONFIG_CREDENTIALS"
                         sed -i "s|IMAGE_VERSION|${APP_VERSION}|g" deployment.yml
                         kubectl apply -f deployment.yml
