@@ -35,10 +35,32 @@ A scalable Full-Stack Learning Management System designed to deliver an efficien
 ## 🔧 Setup Instructions
 
 1. **Clone this repository**
-   ```bash
+   bash
    git clone https://github.com/yourusername/lms-app.git
-# Learning Management System
+2.Backend Setup
+bash
+cd server
+npm install
+npm start
+3.Frontend Setup
+bash
+cd client
+npm install
+npm start
+4.Database Setup
+Install PostgreSQL
+Configure DATABASE_URL in .env
+Run migration scripts if provided
 
-## REACT JS - Presentation tier
-## NODE JS - Application tier
-## POSTGRES - Data tier
+
+📈 Future Enhancements
+1.Integrate video streaming for live classes
+2.Add payment gateway for paid courses
+3.Enable multilingual support
+
+Dockerize for easier deployment
+
+🧠 Learnings
+Gained hands-on experience in full-stack development, REST API design, secure authentication practices and cloud deployment readiness.
+
+
